@@ -17,6 +17,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private int danoForte = 2;
     private Vector2 direcaoOlhando = Vector2.down;
     [SerializeField] private Vector2 tamanhoAtaqueForte = new Vector2(1.5f, 2f);
+    private int danoAtual;
 
     void Awake()
     {
@@ -111,18 +112,17 @@ public class PlayerMovement : MonoBehaviour
     private System.Collections.IEnumerator Atacar(string animacao, float duracao, int dano)
     {
         atacando = true;
+        danoAtual = dano;
         playerAnim.PlayAnimation(animacao);
-        if (animacao == "PlayerAtaq")
-        {
-            CausarDano(dano);
-        }
-        else if (animacao == "PlayerAtaq2")
-        {
-            CausarDanoForte(dano);
-        }
+        
         yield return new WaitForSeconds(duracao);
 
         atacando = false;
+    }
+
+    public void AplicarDanoDoAtaque()
+    {
+        CausarDano(danoAtual);
     }
 
     private void CausarDano(int dano)
