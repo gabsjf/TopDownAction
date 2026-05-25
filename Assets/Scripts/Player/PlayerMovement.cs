@@ -3,21 +3,29 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     [SerializeField] private float vel = 5f;
-    private Rigidbody2D rb;
-    private Vector2 inputMovimento;
-    private PlayerAnimationController playerAnim;
-    private SpriteRenderer spriteRenderer;
-    private bool atacando;
+
+    [Header("Ataque")]
     [SerializeField] private Transform attackPoint;
     [SerializeField] private float attackRadius = 1f;
     [SerializeField] private LayerMask enemyLayer;
     [SerializeField] private int danoBasico = 1;
     [SerializeField] private int danoForte = 2;
-    private Vector2 direcaoOlhando = Vector2.down;
     [SerializeField] private Vector2 tamanhoAtaqueForte = new Vector2(1.5f, 2f);
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip playerHitSfx;
+
+    private Rigidbody2D rb;
+    private Vector2 inputMovimento;
+    private PlayerAnimationController playerAnim;
+    private SpriteRenderer spriteRenderer;
+
+    private bool atacando;
+    private Vector2 direcaoOlhando = Vector2.down;
     private int danoAtual;
+    private bool ataqueForteAtual;
 
     void Awake()
     {
@@ -25,9 +33,10 @@ public class PlayerMovement : MonoBehaviour
         playerAnim = GetComponent<PlayerAnimationController>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         LerInput();
@@ -39,51 +48,40 @@ public class PlayerMovement : MonoBehaviour
     {
         Move();
         Animar();
-        
     }
+
     private void LerInput()
     {
         inputMovimento = Vector2.zero;
+
         if (Keyboard.current.wKey.isPressed)
-        {
             inputMovimento.y += 1;
-            
-        }
-        
+
         if (Keyboard.current.sKey.isPressed)
-        {
             inputMovimento.y -= 1;
-           
-        }
-        
+
         if (Keyboard.current.aKey.isPressed)
         {
             inputMovimento.x -= 1;
             spriteRenderer.flipX = true;
-
         }
-        else
-        
-        if (Keyboard.current.dKey.isPressed)
+        else if (Keyboard.current.dKey.isPressed)
         {
             inputMovimento.x += 1;
-                spriteRenderer.flipX = false;
-
-            }
+            spriteRenderer.flipX = false;
+        }
 
         inputMovimento = inputMovimento.normalized;
-        if(inputMovimento != Vector2.zero)
-        {
-            direcaoOlhando = inputMovimento;
 
-        }
+        if (inputMovimento != Vector2.zero)
+            direcaoOlhando = inputMovimento;
     }
 
     private void AtqBasico()
     {
         if (Mouse.current.leftButton.wasPressedThisFrame && !atacando)
         {
-            StartCoroutine(Atacar("PlayerAtaq", 0.4f,danoBasico));
+            StartCoroutine(Atacar("PlayerAtaq", 0.4f, danoBasico, false));
         }
     }
 
@@ -91,7 +89,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Mouse.current.rightButton.wasPressedThisFrame && !atacando)
         {
-            StartCoroutine(Atacar("PlayerAtaq2", 0.6f,danoForte));
+            StartCoroutine(Atacar("PlayerAtaq2", 0.6f, danoForte, true));
         }
     }
 
@@ -100,21 +98,19 @@ public class PlayerMovement : MonoBehaviour
         if (atacando) return;
 
         if (inputMovimento != Vector2.zero)
-        {
             playerAnim.PlayAnimation("PlayerWalk");
-        }
         else
-        {
             playerAnim.PlayAnimation("PlayerIdle");
-        }
     }
 
-    private System.Collections.IEnumerator Atacar(string animacao, float duracao, int dano)
+    private System.Collections.IEnumerator Atacar(string animacao, float duracao, int dano, bool ataqueForte)
     {
         atacando = true;
         danoAtual = dano;
+        ataqueForteAtual = ataqueForte;
+
         playerAnim.PlayAnimation(animacao);
-        
+
         yield return new WaitForSeconds(duracao);
 
         atacando = false;
@@ -122,12 +118,22 @@ public class PlayerMovement : MonoBehaviour
 
     public void AplicarDanoDoAtaque()
     {
-        CausarDano(danoAtual);
+        if (ataqueForteAtual)
+            CausarDanoForte(danoAtual);
+        else
+            CausarDano(danoAtual);
     }
 
     private void CausarDano(int dano)
     {
-        Collider2D[] inimigos = Physics2D.OverlapCircleAll(attackPoint.position, attackRadius, enemyLayer);
+        bool acertou = false;
+
+        Collider2D[] inimigos = Physics2D.OverlapCircleAll(
+            attackPoint.position,
+            attackRadius,
+            enemyLayer
+        );
+
         foreach (Collider2D inimigo in inimigos)
         {
             Vector2 direcaoParaInimigo =
@@ -142,14 +148,21 @@ public class PlayerMovement : MonoBehaviour
                 if (enemyHealth != null)
                 {
                     enemyHealth.TomaDano(dano);
+                    acertou = true;
                 }
             }
         }
+
+        if (acertou && audioSource != null && playerHitSfx != null)
+            audioSource.PlayOneShot(playerHitSfx);
     }
 
     private void CausarDanoForte(int dano)
     {
-        Vector2 centroAtaque = (Vector2)transform.position + direcaoOlhando.normalized * 0.8f;
+        bool acertou = false;
+
+        Vector2 centroAtaque =
+            (Vector2)transform.position + direcaoOlhando.normalized * 0.8f;
 
         Collider2D[] inimigos = Physics2D.OverlapBoxAll(
             centroAtaque,
@@ -165,8 +178,12 @@ public class PlayerMovement : MonoBehaviour
             if (enemyHealth != null)
             {
                 enemyHealth.TomaDano(dano);
+                acertou = true;
             }
         }
+
+        if (acertou && audioSource != null && playerHitSfx != null)
+            audioSource.PlayOneShot(playerHitSfx);
     }
 
     private void OnDrawGizmosSelected()
@@ -175,7 +192,14 @@ public class PlayerMovement : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
+
+        Gizmos.color = Color.yellow;
+        Vector2 centroAtaque =
+            (Vector2)transform.position + direcaoOlhando.normalized * 0.8f;
+
+        Gizmos.DrawWireCube(centroAtaque, tamanhoAtaqueForte);
     }
+
     private void Move()
     {
         rb.linearVelocity = inputMovimento * vel;
