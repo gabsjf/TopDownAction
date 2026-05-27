@@ -60,6 +60,12 @@ public class EnemyHealth : MonoBehaviour
             enemyIA.PausarIA(false);
     }
 
+    public void ConfigurarVida(int vidaExtra)
+    {
+        vidaMaxima += vidaExtra;
+        vidaAtual = vidaMaxima;
+    }
+
     private void Morrer()
     {
         morto = true;

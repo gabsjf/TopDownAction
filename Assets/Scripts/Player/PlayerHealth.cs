@@ -9,20 +9,35 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private HUDManager hud;
     private int vidaAtual;
 
-    private Animator animator;
-    private Rigidbody2D rigidBody;
-    private PlayerMovement playerMovement;
-    private Collider2D col;
+    [SerializeField] private Animator animator;
+    [SerializeField] private Rigidbody2D rigidBody;
+    [SerializeField] private PlayerMovement playerMovement;
+    private PlayerMovement[] playerMovements;
+    [SerializeField] private Collider2D col;
 
     private bool tomandoDano;
     private bool morto;
 
+    public bool EstaMorto => morto;
+
     private void Awake()
     {
-        animator = GetComponent<Animator>();
-        rigidBody = GetComponent<Rigidbody2D>();
-        playerMovement = GetComponent<PlayerMovement>();
-        col = GetComponent<Collider2D>();
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
+        if (rigidBody == null)
+            rigidBody = GetComponentInParent<Rigidbody2D>();
+
+        if (playerMovement == null)
+            playerMovement = GetComponentInParent<PlayerMovement>();
+
+        if (playerMovement != null)
+            playerMovements = new[] { playerMovement };
+        else
+            playerMovements = GetComponentsInParent<PlayerMovement>();
+
+        if (col == null)
+            col = GetComponentInParent<Collider2D>();
     }
 
     private void Start()
@@ -38,6 +53,11 @@ public class PlayerHealth : MonoBehaviour
 
         vidaAtual -= dano;
 
+        if (vidaAtual < 0)
+            vidaAtual = 0;
+
+        hud.AtualizarVida(vidaAtual);
+
         Debug.Log("Player tomou dano. Vida atual: " + vidaAtual);
 
         if (vidaAtual <= 0)
@@ -47,7 +67,6 @@ public class PlayerHealth : MonoBehaviour
         }
 
         StartCoroutine(HurtRoutine());
-        hud.AtualizarVida(vidaAtual);
     }
 
     private IEnumerator HurtRoutine()
@@ -56,8 +75,14 @@ public class PlayerHealth : MonoBehaviour
 
         rigidBody.linearVelocity = Vector2.zero;
 
-        if (playerMovement != null)
-            playerMovement.enabled = false;
+        if (playerMovements != null)
+        {
+            foreach (var movement in playerMovements)
+            {
+                if (movement != null)
+                    movement.enabled = false;
+            }
+        }
 
         animator.Play("PlayerHurt", 0, 0f);
 
@@ -65,10 +90,13 @@ public class PlayerHealth : MonoBehaviour
 
         tomandoDano = false;
 
-        if (!morto)
+        if (!morto && playerMovements != null)
         {
-            if (playerMovement != null)
-                playerMovement.enabled = true;
+            foreach (var movement in playerMovements)
+            {
+                if (movement != null)
+                    movement.enabled = true;
+            }
         }
     }
 
@@ -78,17 +106,33 @@ public class PlayerHealth : MonoBehaviour
 
         StopAllCoroutines();
 
-        rigidBody.linearVelocity = Vector2.zero;
+        if (rigidBody != null)
+            rigidBody.linearVelocity = Vector2.zero;
 
-        if (playerMovement != null)
-            playerMovement.enabled = false;
+        if (playerMovements != null)
+        {
+            foreach (var movement in playerMovements)
+            {
+                if (movement != null)
+                    movement.enabled = false;
+            }
+        }
 
         if (col != null)
             col.enabled = false;
 
-        animator.Play("PlayerDead", 0, 0f);
+        var knockbacks = GetComponentsInParent<PlayerKnockback>();
+        if (knockbacks != null)
+        {
+            foreach (var knockback in knockbacks)
+            {
+                if (knockback != null)
+                    knockback.enabled = false;
+            }
+        }
 
-        Destroy(gameObject, duracaoMorte);
-        hud.MostrarGameOver();
+        GetComponent<PlayerAnimationController>().PlayDeath();
+        if (hud != null)
+            hud.MostrarGameOver();
     }
 }

@@ -12,7 +12,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private int danoBasico = 1;
     [SerializeField] private int danoForte = 2;
     [SerializeField] private Vector2 tamanhoAtaqueForte = new Vector2(1.5f, 2f);
-
+    public float knockbackForce = 70f;
+    [SerializeField] private ScreenShake screenShake;
+    [SerializeField] private float shakeDuracao = 0.08f;
+    [SerializeField] private float shakeIntensidade = 0.08f;
     [Header("Audio")]
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip playerHitSfx;
@@ -21,6 +24,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 inputMovimento;
     private PlayerAnimationController playerAnim;
     private SpriteRenderer spriteRenderer;
+    private PlayerHealth playerHealth;
 
     private bool atacando;
     private Vector2 direcaoOlhando = Vector2.down;
@@ -32,6 +36,7 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         playerAnim = GetComponent<PlayerAnimationController>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        playerHealth = GetComponent<PlayerHealth>();
 
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
@@ -39,6 +44,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (playerHealth != null && playerHealth.EstaMorto)
+            return;
+
         LerInput();
         AtqBasico();
         AtqForte();
@@ -46,6 +54,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (playerHealth != null && playerHealth.EstaMorto)
+            return;
+
         Move();
         Animar();
     }
@@ -149,6 +160,17 @@ public class PlayerMovement : MonoBehaviour
                 {
                     enemyHealth.TomaDano(dano);
                     acertou = true;
+
+                    EnemyKnockback knockback = inimigo.GetComponent<EnemyKnockback>();
+
+                    if (knockback != null)
+                    {
+                        knockback.AplicarKnockback(transform, 8f);
+                    }
+                    if (screenShake != null)
+                    {
+                        screenShake.Shake(shakeDuracao, shakeIntensidade);
+                    }
                 }
             }
         }
@@ -179,6 +201,16 @@ public class PlayerMovement : MonoBehaviour
             {
                 enemyHealth.TomaDano(dano);
                 acertou = true;
+                EnemyKnockback knockback = inimigo.GetComponent<EnemyKnockback>();
+
+                if (knockback != null)
+                {
+                    knockback.AplicarKnockback(transform, 8f);
+                }
+                if (screenShake != null)
+                {
+                    screenShake.Shake(shakeDuracao, shakeIntensidade);
+                }
             }
         }
 

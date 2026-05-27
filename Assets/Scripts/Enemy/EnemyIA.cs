@@ -20,6 +20,7 @@ public class EnemyIA : MonoBehaviour
     [SerializeField] private AudioClip orcHitSfx;
 
     private Transform alvo;
+    private PlayerHealth alvoHealth;
     private bool atacando;
     private Animator animator;
     private bool pausada;
@@ -31,7 +32,10 @@ public class EnemyIA : MonoBehaviour
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
+        {
             alvo = player.transform;
+            alvoHealth = player.GetComponentInChildren<PlayerHealth>();
+        }
 
         if (rigidBody == null)
             rigidBody = GetComponent<Rigidbody2D>();
@@ -45,12 +49,17 @@ public class EnemyIA : MonoBehaviour
 
     void Update()
     {
-        if (morto || pausada || alvo == null)
+        if (morto || alvo == null || (alvoHealth != null && alvoHealth.EstaMorto))
         {
             rigidBody.linearVelocity = Vector2.zero;
             return;
         }
 
+        if (pausada)
+        {
+            return;
+
+        }
         Vector2 posicaoAlvo = alvo.position;
         Vector2 posicaoAtual = transform.position;
 
@@ -81,9 +90,6 @@ public class EnemyIA : MonoBehaviour
     public void PausarIA(bool devePausar)
     {
         pausada = devePausar;
-
-        if (pausada && rigidBody != null)
-            rigidBody.linearVelocity = Vector2.zero;
     }
 
     public void MarcarComoMorto()
@@ -116,6 +122,9 @@ public class EnemyIA : MonoBehaviour
 
     public void AplicarDanoDoAtaque()
     {
+        if (alvoHealth != null && alvoHealth.EstaMorto)
+            return;
+
         bool acertou = false;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(
@@ -132,12 +141,27 @@ public class EnemyIA : MonoBehaviour
             if (playerHealth != null)
             {
                 playerHealth.TomarDano(danoAtaque);
+
+                PlayerKnockback knockback =
+                    hit.GetComponentInParent<PlayerKnockback>();
+
+                if (knockback != null)
+                {
+                    knockback.AplicarKnockback(transform, 10f);
+                }
+
                 acertou = true;
             }
         }
 
         if (acertou && audioSource != null && orcHitSfx != null)
             audioSource.PlayOneShot(orcHitSfx);
+    }
+
+    public void ConfigurarDificuldade(float velocidadeExtra, int danoExtra)
+    {
+        velocidade += velocidadeExtra;
+        danoAtaque += danoExtra;
     }
 
     private void OnDrawGizmosSelected()

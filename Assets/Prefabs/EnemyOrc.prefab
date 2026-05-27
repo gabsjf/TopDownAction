@@ -47,6 +47,7 @@ GameObject:
   - component: {fileID: 8804131454196708747}
   - component: {fileID: 4163669469559774093}
   - component: {fileID: 1753456989867735860}
+  - component: {fileID: 7957583467523387471}
   m_Layer: 6
   m_Name: EnemyOrc
   m_TagString: Untagged
@@ -63,7 +64,7 @@ Transform:
   m_GameObject: {fileID: 894147297953725144}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.55, y: -1.72013, z: 0}
+  m_LocalPosition: {x: -5.18039, y: -3.27132, z: 0}
   m_LocalScale: {x: 4.5, y: 4.5, z: 4.5}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -83,7 +84,7 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDamping: 20
+  m_LinearDamping: 5
   m_AngularDamping: 10
   m_GravityScale: 0
   m_Material: {fileID: 0}
@@ -93,7 +94,7 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
@@ -243,7 +244,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyIA
   velocidade: 1.5
-  distanciaMinima: 1.2
+  distanciaMinima: 1
   rigidBody: {fileID: 421825246446934858}
   spriteRenderer: {fileID: 7075516098264483808}
   attackPoint: {fileID: 6232397447275984516}
@@ -352,3 +353,16 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &7957583467523387471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 894147297953725144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ad5fd36498a86740bf4a0b12a0c2937, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyKnockback
+  tempoKnockback: 0.3

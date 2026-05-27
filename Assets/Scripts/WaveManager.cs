@@ -15,6 +15,7 @@ public class WaveManager : MonoBehaviour
 
     [Header("HUD")]
     [SerializeField] private HUDManager hud;
+    [SerializeField] private float tempoEntreSpawns = 0.5f;
 
     private int waveAtual = 0;
     private int inimigosVivos = 0;
@@ -27,7 +28,6 @@ public class WaveManager : MonoBehaviour
     private IEnumerator IniciarProximaWave()
     {
         yield return new WaitForSeconds(tempoEntreWaves);
-        hud.AtualizarWave(waveAtual);
 
         waveAtual++;
 
@@ -37,45 +37,53 @@ public class WaveManager : MonoBehaviour
         Debug.Log("Wave " + waveAtual);
 
         hud.AtualizarWave(waveAtual);
+        hud.MostrarWavePopup(waveAtual);
 
         for (int i = 0; i < quantidadeInimigos; i++)
         {
             SpawnarInimigo();
-        }
 
-        hud.AtualizarInimigos(inimigosVivos);
+            yield return new WaitForSeconds(tempoEntreSpawns);
+        }
     }
 
     private void SpawnarInimigo()
     {
-        int indice =
-            Random.Range(0, spawnPoints.Length);
+        int indice = Random.Range(0, spawnPoints.Length);
+        Transform spawnPoint = spawnPoints[indice];
 
-        Transform spawnPoint =
-            spawnPoints[indice];
+        GameObject inimigo = Instantiate(
+            enemyPrefab,
+            spawnPoint.position,
+            Quaternion.identity
+        );
 
-        GameObject inimigo =
-            Instantiate(
-                enemyPrefab,
-                spawnPoint.position,
-                Quaternion.identity
-            );
+        int vidaExtra = waveAtual - 1;
+        float velocidadeExtra = (waveAtual - 1) * 0.2f;
+        int danoExtra = (waveAtual - 1) / 3;
+
+        EnemyHealth enemyHealth = inimigo.GetComponent<EnemyHealth>();
+        EnemyIA enemyIA = inimigo.GetComponent<EnemyIA>();
+
+        if (enemyHealth != null)
+        {
+            enemyHealth.ConfigurarVida(vidaExtra);
+            enemyHealth.OnEnemyDeath += InimigoMorreu;
+        }
+
+        if (enemyIA != null)
+        {
+            enemyIA.ConfigurarDificuldade(velocidadeExtra, danoExtra);
+        }
 
         inimigosVivos++;
 
-        hud.AtualizarInimigos(inimigosVivos);
-
-        EnemyHealth enemyHealth =
-            inimigo.GetComponent<EnemyHealth>();
-
-        enemyHealth.OnEnemyDeath += InimigoMorreu;
     }
 
     private void InimigoMorreu()
     {
         inimigosVivos--;
 
-        hud.AtualizarInimigos(inimigosVivos);
 
         Debug.Log(
             "Inimigos restantes: " +

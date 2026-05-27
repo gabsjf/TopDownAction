@@ -1,16 +1,18 @@
 using TMPro;
 using UnityEngine;
+using System.Collections;
 
 public class HUDManager : MonoBehaviour
 {
     [SerializeField] private TMP_Text VidaTexto;
     [SerializeField] private TMP_Text WaveTexto;
-    [SerializeField] private TMP_Text InimigoTexto;
     [SerializeField] private GameObject GameOverTexto;
+    [SerializeField] private TMP_Text WavePopupTexto;
 
     private void Start()
     {
         GameOverTexto.SetActive(false);
+        WavePopupTexto.gameObject.SetActive(false);
     }
 
     public void AtualizarVida(int vida)
@@ -23,14 +25,23 @@ public class HUDManager : MonoBehaviour
         WaveTexto.text = "Wave: " + wave;
     }
 
-    public void AtualizarInimigos(int quantidade)
-    {
-        InimigoTexto.text =
-            "Inimigos: " + quantidade;
-    }
-
     public void MostrarGameOver()
     {
         GameOverTexto.SetActive(true);
+    }
+
+    public void MostrarWavePopup(int wave)
+    {
+        StartCoroutine(MostrarWavePopupRoutine(wave));
+    }
+
+    private IEnumerator MostrarWavePopupRoutine(int wave)
+    {
+        WavePopupTexto.gameObject.SetActive(true);
+        WavePopupTexto.text = "WAVE " + wave;
+
+        yield return new WaitForSeconds(1.2f);
+
+        WavePopupTexto.gameObject.SetActive(false);
     }
 }
