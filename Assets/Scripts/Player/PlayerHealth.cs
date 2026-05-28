@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
 {
-    [SerializeField] private int vidaMaxima = 5;
+    [SerializeField] private int vidaMaxima = 8;
     [SerializeField] private float duracaoHurt = 0.4f;
     [SerializeField] private float duracaoMorte = 1.5f;
     [SerializeField] private HUDManager hud;
@@ -43,7 +43,8 @@ public class PlayerHealth : MonoBehaviour
     private void Start()
     {
         vidaAtual = vidaMaxima;
-        hud.AtualizarVida(vidaAtual); 
+        hud.ConfigurarVidaMaxima(vidaMaxima);
+        hud.AtualizarVida(vidaAtual);
     }
 
     public void TomarDano(int dano)

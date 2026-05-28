@@ -20,6 +20,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip playerHitSfx;
 
+    [Header("Combo")]
+    [SerializeField] private float janelaCombo = 0.6f;
+    [SerializeField] private int danoComboFinal = 3;
+    [SerializeField] private GameObject hitParticlePrefab;
     private Rigidbody2D rb;
     private Vector2 inputMovimento;
     private PlayerAnimationController playerAnim;
@@ -30,6 +34,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 direcaoOlhando = Vector2.down;
     private int danoAtual;
     private bool ataqueForteAtual;
+    private int comboAtual = 0;
+    private float tempoUltimoAtaque;
 
     void Awake()
     {
@@ -92,15 +98,36 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Mouse.current.leftButton.wasPressedThisFrame && !atacando)
         {
-            StartCoroutine(Atacar("PlayerAtaq", 0.4f, danoBasico, false));
+            if (Time.time - tempoUltimoAtaque > janelaCombo)
+            {
+                comboAtual = 0;
+            }
+
+            comboAtual++;
+            tempoUltimoAtaque = Time.time;
+
+            if (comboAtual == 1)
+            {
+                StartCoroutine(Atacar("PlayerAtaq", 0.3f, danoBasico, false));
+            }
+            else if (comboAtual == 2)
+            {
+                StartCoroutine(Atacar("PlayerAtaq", 0.3f, danoBasico, false));
+            }
+            else
+            {
+                StartCoroutine(Atacar("PlayerAtaq2", 0.45f, danoComboFinal, true));
+                comboAtual = 0;
+            }
         }
     }
-
+ 
     private void AtqForte()
     {
         if (Mouse.current.rightButton.wasPressedThisFrame && !atacando)
         {
-            StartCoroutine(Atacar("PlayerAtaq2", 0.6f, danoForte, true));
+            comboAtual = 0;
+            StartCoroutine(Atacar("PlayerAtaq2", 0.7f, danoForte, true));
         }
     }
 
@@ -159,6 +186,16 @@ public class PlayerMovement : MonoBehaviour
                 if (enemyHealth != null)
                 {
                     enemyHealth.TomaDano(dano);
+                    if (hitParticlePrefab != null)
+                    {
+                        GameObject particula = Instantiate(
+                            hitParticlePrefab,
+                            inimigo.transform.position,
+                            Quaternion.identity
+                        );
+
+                        Destroy(particula, 1f);
+                    }
                     acertou = true;
 
                     EnemyKnockback knockback = inimigo.GetComponent<EnemyKnockback>();
@@ -200,6 +237,16 @@ public class PlayerMovement : MonoBehaviour
             if (enemyHealth != null)
             {
                 enemyHealth.TomaDano(dano);
+                if (hitParticlePrefab != null)
+                {
+                    GameObject particula = Instantiate(
+                        hitParticlePrefab,
+                        inimigo.transform.position,
+                        Quaternion.identity
+                    );
+
+                    Destroy(particula, 1f);
+                }
                 acertou = true;
                 EnemyKnockback knockback = inimigo.GetComponent<EnemyKnockback>();
 
